@@ -1,0 +1,8 @@
+# Ignorer tous les extensions suivantes :
+*.log
+*.env
+# Ignorer tous les fichiers suivants : 
+db_password.txt
+db_username.txt
+# Ignorer tous les dossiers suivants : 
+.vagrant/
