@@ -3,9 +3,9 @@
 
 # Liste des machines
 machines = [
-  { :hostname => "controlplane", :ip => "192.168.8.100", :box => "hashicorp/bionic64", :ram => 4096, :cpu => 2 },
-  { :hostname => "nodeworker1", :ip => "192.168.8.101", :box => "hashicorp/bionic64", :ram => 4096, :cpu => 2 },
-  { :hostname => "nodeworker2", :ip => "192.168.8.102", :box => "hashicorp/bionic64", :ram => 4096, :cpu => 2 }
+  { :hostname => "controlplane", :ip => "192.168.8.100", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-node.sh" },
+  { :hostname => "nodeworker1", :ip => "192.168.8.101", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-node.sh" },
+  { :hostname => "nodeworker2", :ip => "192.168.8.102", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-node.sh" }
 ]
 
 Vagrant.configure(2) do |config|
@@ -19,7 +19,7 @@ Vagrant.configure(2) do |config|
         vb.memory = machine[:ram]
         vb.cpus = machine[:cpu]
       end
-      node.vm.provision "shell", path: "install_k8s.sh"
+      node.vm.provision "shell", path: machine[:script]
     end
   end
 end
