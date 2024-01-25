@@ -6,11 +6,14 @@
 #   5. Prenez des instantanés avant l'installation, ainsi vous pouvez installer 
 #       et revenir à l'instantané si nécessaire 
 #
-ssh ip_controlplanenode
+#ssh ip_controlplanenode
 
 # 0 - Désactivez la swap, utilisez swapoff puis modifiez votre fstab en supprimant toute entrée pour les partitions swap
 # Vous pouvez récupérer l'espace avec fdisk. Vous voudrez peut-être redémarrer pour vous assurer que votre configuration est correcte.
 sudo swapoff -a
+
+# Définition de la route par défaut
+sudo ip route add default via 192.168.8.1
 
 # 0 - Installer les paquets
 # Prérequis de containerd, chargez deux modules et configurez-les pour qu'ils se chargent au démarrage
@@ -22,6 +25,10 @@ EOF
 
 sudo modprobe overlay
 sudo modprobe br_netfilter
+
+#Activation de l'IPv4 forwarding
+echo "1" | sudo tee /proc/sys/net/ipv4/ip_forward
+sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 
 # Paramètres sysctl nécessaires à la configuration, les paramètres persistent après les redémarrages
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
@@ -38,7 +45,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  
+
 sudo apt-get update 
 sudo apt-get install -y containerd.io
 
@@ -52,10 +59,10 @@ sudo containerd config default | sudo tee /etc/containerd/config.toml
 # https://github.com/containerd/containerd/blob/master/docs/ops.md
 
 # À la fin de cette section, changez SystemdCgroup = false en SystemdCgroup = true
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-        ...
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-            SystemdCgroup = true
+#        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+#        ...
+#          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+#            SystemdCgroup = true
 
 # Vous pouvez utiliser sed pour remplacer par true
 sudo sed -i 's/            SystemdCgroup = false/            SystemdCgroup = true/' /etc/containerd/config.toml
@@ -67,22 +74,27 @@ sudo sed -i 's/            SystemdCgroup = false/            SystemdCgroup = tru
 sudo systemctl restart containerd
 
 # Installez les paquets Kubernetes - kubeadm, kubelet et kubectl
-# Ajoutez la clé gpg du dépôt apt de Google
-sudo curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+# Ajoutez la clé gpg du dépôt apt de Google (en erreur)
+#sudo curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 
-# Ajoutez le dépôt apt de Kubernetes
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+# Ajoutez le dépôt apt de Kubernetes (en erreur)
+#echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # Mettez à jour la liste des paquets et utilisez apt-cache policy pour inspecter les versions disponibles dans le dépôt
+sudo apt-get update && sudo apt-get install -y apt-transport-https
+curl -4 -sL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo touch /etc/apt/sources.list.d/kubernetes.list
+echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update
-apt-cache policy kubelet | head -n 20 
+apt-cache policy kubelet | head -n 20
 
 # Installez les paquets requis, si nécessaire nous pouvons demander une version spécifique.
 # Utilisez cette version car dans un cours ultérieur, nous mettrons à niveau le cluster vers une version plus récente.
 # Essayez de choisir une version précédente car plus tard dans cette série, nous effectuerons une mise à niveau
 VERSION=1.26.0-00
 
-sudo apt-get install -y kubelet=$VERSION kubeadm=$VERSION kubectl=$VERSION 
+#sudo apt-get install -y kubelet=$VERSION kubeadm=$VERSION kubectl=$VERSION 
+sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl containerd
 
 # Pour installer la dernière version, omettez les paramètres de version. J'ai testé toutes les démonstrations avec la version ci-dessus, si vous utilisez la dernière, cela peut affecter d'autres démonstrations dans ce cours et les cours à venir dans la série
@@ -121,10 +133,13 @@ wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/cal
 #ajustez si nécessaire pour votre infrastructure pour vous assurer que la plage d'adresses IP du réseau de pods
 #ne se chevauche pas avec d'autres réseaux dans notre infrastructure.
 #vi calico.yaml
+sudo sed -i 's/            # - name: CALICO_IPV4POOL_CIDR/            - name: CALICO_IPV4POOL_CIDR /' calico.yaml
+sudo sed -i 's@            #   value: "192.168.0.0/16"@              value: "172.16.0.0/16" @g' calico.yaml
 
 
 #Vous pouvez maintenant simplement utiliser kubeadm init pour initialiser le cluster
-sudo kubeadm init --kubernetes-version v1.26.0
+#sudo kubeadm init --kubernetes-version v1.26.0
+sudo kubeadm init --apiserver-advertise-address=192.168.8.200
 
 #sudo kubeadm init #supprimez le paramètre kubernetes-version si vous voulez utiliser la dernière version.
 
@@ -135,6 +150,11 @@ sudo kubeadm init --kubernetes-version v1.26.0
 
 #1 - Création d'un réseau de Pods
 #Déployez le fichier yaml pour votre réseau de pods.
+#Configurez notre compte sur le Noeud de Plan de Contrôle pour avoir un accès administrateur au serveur API depuis un compte non privilégié.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
 kubectl apply -f calico.yaml
 
 
@@ -174,7 +194,15 @@ kubectl apply -f calico.yaml
 #Vérifiez le répertoire où se trouvent les fichiers de configuration kube pour chacun des pods du plan de contrôle.
 #ls /etc/kubernetes
 
-#Configurez notre compte sur le Noeud de Plan de Contrôle pour avoir un accès administrateur au serveur API depuis un compte non privilégié.
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+# ---------------------------------------------------------------------------- #
+# --------------------- Joindre un noeud au cluster K8S ---------------------- #
+# ---------------------------------------------------------------------------- #
+
+# Commandes pour récupérer le token
+#kubeadm token list
+# Commandes pour récupérer le caCertHashes
+#cd /etc/kubernetes/pki
+#openssl x509 -pubkey -in ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+# Ces informations seront à transmettre aux worker nodes afin qu'ils rejoingnent le cluster
+# Commandes pour récupérer le token + le caCertHashes
+sudo kubeadm token create --print-join-command
