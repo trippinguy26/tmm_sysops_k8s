@@ -13,7 +13,7 @@
 sudo swapoff -a
 
 # Définition de la route par défaut
-sudo ip route add default via 192.168.8.1
+sudo ip route add 0.0.0.0 via 10.0.200.254
 
 # 0 - Installer les paquets
 # Prérequis de containerd, chargez deux modules et configurez-les pour qu'ils se chargent au démarrage

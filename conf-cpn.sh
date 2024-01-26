@@ -13,7 +13,7 @@
 sudo swapoff -a
 
 # Définition de la route par défaut
-sudo ip route add default via 192.168.8.1
+sudo ip route add 0.0.0.0 via 10.0.200.254
 
 # 0 - Installer les paquets
 # Prérequis de containerd, chargez deux modules et configurez-les pour qu'ils se chargent au démarrage
@@ -134,12 +134,11 @@ wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/cal
 #ne se chevauche pas avec d'autres réseaux dans notre infrastructure.
 #vi calico.yaml
 sudo sed -i 's/            # - name: CALICO_IPV4POOL_CIDR/            - name: CALICO_IPV4POOL_CIDR /' calico.yaml
-sudo sed -i 's@            #   value: "192.168.0.0/16"@              value: "172.16.0.0/16" @g' calico.yaml
-
+sudo sed -i 's@            #   value: "192.168.0.0/16"@              value: "172.16.200.0/24" @g' calico.yaml
 
 #Vous pouvez maintenant simplement utiliser kubeadm init pour initialiser le cluster
 #sudo kubeadm init --kubernetes-version v1.26.0
-sudo kubeadm init --apiserver-advertise-address=192.168.8.200
+sudo kubeadm init --apiserver-advertise-address=10.0.200.200
 
 #sudo kubeadm init #supprimez le paramètre kubernetes-version si vous voulez utiliser la dernière version.
 
