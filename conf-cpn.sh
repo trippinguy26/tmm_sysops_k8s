@@ -11,9 +11,11 @@
 # 0 - Désactivez la swap, utilisez swapoff puis modifiez votre fstab en supprimant toute entrée pour les partitions swap
 # Vous pouvez récupérer l'espace avec fdisk. Vous voudrez peut-être redémarrer pour vous assurer que votre configuration est correcte.
 sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
 
 # Définition de la route par défaut
-sudo ip route add 0.0.0.0 via 10.0.200.254
+#sudo ip route add 0.0.0.0 via 192.168.8.1
+sudo ip route add default via 192.168.8.1
 
 # 0 - Installer les paquets
 # Prérequis de containerd, chargez deux modules et configurez-les pour qu'ils se chargent au démarrage
@@ -138,7 +140,7 @@ sudo sed -i 's@            #   value: "192.168.0.0/16"@              value: "172
 
 #Vous pouvez maintenant simplement utiliser kubeadm init pour initialiser le cluster
 #sudo kubeadm init --kubernetes-version v1.26.0
-sudo kubeadm init --apiserver-advertise-address=10.0.200.200
+sudo kubeadm init --apiserver-advertise-address=192.168.8.200
 
 #sudo kubeadm init #supprimez le paramètre kubernetes-version si vous voulez utiliser la dernière version.
 
@@ -154,7 +156,7 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-kubectl apply -f calico.yaml
+sudo kubectl apply -f calico.yaml
 
 
 #Recherchez tous les pods système et les pods calico pour qu'ils passent à l'état Running.
@@ -198,10 +200,24 @@ kubectl apply -f calico.yaml
 # ---------------------------------------------------------------------------- #
 
 # Commandes pour récupérer le token
-#kubeadm token list
+#sudo kubeadm token list
 # Commandes pour récupérer le caCertHashes
 #cd /etc/kubernetes/pki
 #openssl x509 -pubkey -in ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
 # Ces informations seront à transmettre aux worker nodes afin qu'ils rejoingnent le cluster
+
 # Commandes pour récupérer le token + le caCertHashes
 sudo kubeadm token create --print-join-command
+
+# ---------------------------------------------------------------------------- #
+# ----------------- Commandes additionnelles au cluster K8S ------------------ #
+# ---------------------------------------------------------------------------- #
+
+#Configurez notre compte sur le Noeud de Plan de Contrôle pour avoir un accès administrateur au serveur API depuis un compte non privilégié.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+#Activation de l'auto-completion pour kubectl
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc

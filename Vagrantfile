@@ -3,9 +3,9 @@
 
 # Liste des machines
 machines = [
-  { :hostname => "cpn", :ip => "10.0.200.200", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-cpn.sh" },
-  { :hostname => "wn1", :ip => "10.0.200.201", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-wn.sh" }
-  #{ :hostname => "wn2", :ip => "10.0.200.202", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-wn.sh" }
+  { :hostname => "cpn", :ip => "192.168.8.200", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-cpn.sh" },
+  { :hostname => "wn1", :ip => "192.168.8.201", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-wn.sh" },
+  #{ :hostname => "wn2", :ip => "192.168.8.202", :box => "ubuntu/jammy64", :ram => 4096, :cpu => 2, :script => "conf-wn.sh" }
 ]
 
 Vagrant.configure(2) do |config|

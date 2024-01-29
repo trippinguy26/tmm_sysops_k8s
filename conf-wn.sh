@@ -11,9 +11,11 @@
 # 0 - Désactivez la swap, utilisez swapoff puis modifiez votre fstab en supprimant toute entrée pour les partitions swap
 # Vous pouvez récupérer l'espace avec fdisk. Vous voudrez peut-être redémarrer pour vous assurer que votre configuration est correcte.
 sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
 
 # Définition de la route par défaut
-sudo ip route add 0.0.0.0 via 10.0.200.254
+#sudo ip route add 0.0.0.0 via 192.168.8.1
+sudo ip route add default via 192.168.8.1
 
 # 0 - Installer les paquets
 # Prérequis de containerd, chargez deux modules et configurez-les pour qu'ils se chargent au démarrage
@@ -85,6 +87,7 @@ sudo apt-get update
 apt-cache policy kubelet | head -n 20
 
 # Installez les paquets requis, si nécessaire nous pouvons demander une version spécifique.
+# Pour installer la dernière version, omettez les paramètres de version. J'ai testé toutes les démonstrations avec la version ci-dessus, si vous utilisez la dernière, cela peut affecter d'autres démonstrations dans ce cours et les cours à venir dans la série
 # Utilisez cette version car dans un cours ultérieur, nous mettrons à niveau le cluster vers une version plus récente.
 # Essayez de choisir une version précédente car plus tard dans cette série, nous effectuerons une mise à niveau
 VERSION=1.26.0-00
@@ -92,10 +95,6 @@ VERSION=1.26.0-00
 #sudo apt-get install -y kubelet=$VERSION kubeadm=$VERSION kubectl=$VERSION 
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl containerd
-
-# Pour installer la dernière version, omettez les paramètres de version. J'ai testé toutes les démonstrations avec la version ci-dessus, si vous utilisez la dernière, cela peut affecter d'autres démonstrations dans ce cours et les cours à venir dans la série
-# sudo apt-get install kubelet kubeadm kubectl
-# sudo apt-mark hold kubelet kubeadm kubectl containerd
 
 # 1 - Unités systemd
 # Vérifiez le statut de notre kubelet et de notre runtime de conteneur, containerd.
@@ -114,5 +113,3 @@ sudo systemctl enable containerd.service
 #Activation de l'IPv4 forwarding
 echo "1" | sudo tee /proc/sys/net/ipv4/ip_forward
 sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
-
-#sudo kubeadm join 192.168.8.200:6443 --token okwf2t.cyixy4y6x7u6xdkg --discovery-token-ca-cert-hash sha256:09d15af60a1ddd25448cc1c736c52b2ea5011ab093c99731ac9ac8a63b9861df
