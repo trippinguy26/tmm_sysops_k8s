@@ -107,9 +107,15 @@ sudo systemctl enable kubelet.service
 sudo systemctl enable containerd.service
 
 # ---------------------------------------------------------------------------- #
-# --------------------- Joindre un noeud au cluster K8S ---------------------- #
+# ----------------- Commandes additionnelles au cluster K8S ------------------ #
 # ---------------------------------------------------------------------------- #
 
 #Activation de l'IPv4 forwarding
 echo "1" | sudo tee /proc/sys/net/ipv4/ip_forward
 sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
+#Activation de l'auto-completion pour kubectl + crictl
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+source <(crictl completion bash)
+echo "source <(crictl completion bash)" >> ~/.bashrc

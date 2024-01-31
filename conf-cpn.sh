@@ -14,7 +14,6 @@ sudo swapoff -a
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 
 # Définition de la route par défaut
-#sudo ip route add 0.0.0.0 via 192.168.8.1
 sudo ip route add default via 192.168.8.1
 
 # 0 - Installer les paquets
@@ -218,6 +217,8 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-#Activation de l'auto-completion pour kubectl
+#Activation de l'auto-completion pour kubectl + crictl
 source <(kubectl completion bash)
 echo "source <(kubectl completion bash)" >> ~/.bashrc
+source <(crictl completion bash)
+echo "source <(crictl completion bash)" >> ~/.bashrc
