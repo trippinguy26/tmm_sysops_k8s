@@ -14,7 +14,6 @@ sudo swapoff -a
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 
 # Définition de la route par défaut
-#sudo ip route add 0.0.0.0 via 192.168.8.1
 sudo ip route add default via 192.168.8.1
 
 # 0 - Installer les paquets
@@ -106,13 +105,13 @@ sudo apt-mark hold kubelet kubeadm kubectl containerd
 sudo systemctl enable kubelet.service
 sudo systemctl enable containerd.service
 
-# ---------------------------------------------------------------------------- #
-# ----------------- Commandes additionnelles au cluster K8S ------------------ #
-# ---------------------------------------------------------------------------- #
-
 #Activation de l'IPv4 forwarding
 echo "1" | sudo tee /proc/sys/net/ipv4/ip_forward
 sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
+# ---------------------------------------------------------------------------- #
+# ----------------- Commandes additionnelles au cluster K8S ------------------ #
+# ---------------------------------------------------------------------------- #
 
 #Activation de l'auto-completion pour kubectl + crictl
 source <(kubectl completion bash)

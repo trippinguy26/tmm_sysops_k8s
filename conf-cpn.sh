@@ -217,8 +217,10 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-#Activation de l'auto-completion pour kubectl + crictl
+#Activation de l'auto-completion pour kubectl + crictl + kubeadm
 source <(kubectl completion bash)
 echo "source <(kubectl completion bash)" >> ~/.bashrc
 source <(crictl completion bash)
 echo "source <(crictl completion bash)" >> ~/.bashrc
+source <(kubeadm completion bash)
+echo "source <(kubeadm completion bash)" >> ~/.bashrc
